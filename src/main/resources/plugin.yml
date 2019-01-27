@@ -1,0 +1,43 @@
+name: Factorize
+main: org.jmt.factorize.Factorize
+version: 0.1.1
+api-version: 1.13
+permissions:
+    factorize.spawn:
+      description: Allows player to teleport home
+      default: true
+    factorize.wild:
+      description: Allows player to randomly teleport to the wilds
+      default: true
+    factorize.dsutest:
+      description: Allows for accessing DSU by ID
+      default: OP
+    factorize.hamma:
+      description: Allows for getting a hammer
+      default: OP
+commands:
+  spawn:
+      description: Sends you back to your spawn.
+      usage: /spawn
+      permission: factorize.spawn
+      permission-message: YOU ARE NOT AUTHORISED
+  wild:
+      description: Sends you to a random location
+      usage: /wild (radius)
+      permission: factorize.wild
+      permission-message: I'm sorry dave. But this is probably blocked by lag
+  devtest:
+      description: DOES TEST
+      usage: /devtest
+      permission: factorize.devtest
+      permission-message: You need location control to use this.
+  dsu:
+      description: DSU managment command
+      usage: /dsu [id]
+      permission: factorize.dsutest
+      permission-message: You need DSU AUTH
+  hammertime:
+      description: HAMMAH POWAH
+      usage: /dsu [id]
+      permission: factorize.hamma
+      permission-message: HAMMA's don't trust you

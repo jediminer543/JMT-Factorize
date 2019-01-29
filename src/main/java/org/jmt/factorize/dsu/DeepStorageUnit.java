@@ -121,7 +121,9 @@ public class DeepStorageUnit {
 				//NOT INV WE CARE ABOUT
 				return;
 			}
-			
+			if (ecv.getClickedInventory() == null) {
+				return;
+			}
 			Inventory playerinv = ecv.getWhoClicked().getInventory();
 			HumanEntity player = ecv.getWhoClicked();
 			int idx = Integer.valueOf(dsu.getName().split(" ")[1]);

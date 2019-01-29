@@ -1,9 +1,11 @@
 package org.jmt.factorize.multiblock;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 /**
@@ -33,7 +35,16 @@ public interface IMultiblock {
 	public List<PBlock> getPattern();
 	
 	/**
-	 * 
+	 * Create a new instance of this multiblock structure
+	 * that was created by player.
 	 */
 	public IMultiblockInstance setupNew(Location coreLoc, Player p);
+	
+	/**
+	 * Restore a given instance of this multiblock structure,
+	 * loading data from config as required, and ensuring
+	 * UUIDs are correctly setup
+	 */
+	public IMultiblockInstance setupNew(Location coreLoc, UUID id, ConfigurationSection data);
+	
 }

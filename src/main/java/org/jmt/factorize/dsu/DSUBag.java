@@ -8,6 +8,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -43,6 +44,37 @@ public class DSUBag {
 		is.setItemMeta(meta);
 		return is;
 	}
+	
+	public static boolean isDSUBag(ItemStack is) {
+		if (is != null && is.hasItemMeta() && is.getItemMeta().hasLore()
+				&& is.getItemMeta().getLore().size() == 4) {
+			if (is.getItemMeta().getLore().get(0).equals("DSUBAG")) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isDSUBagTemplate(ItemStack is) {
+		if (is != null && is.hasItemMeta() && is.getItemMeta().hasLore()
+				&& is.getItemMeta().getLore().size() == 4) {
+			if (is.getItemMeta().getLore().get(0).equals("DSUBAGTMP")) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static boolean templateToBag(Player p, ItemStack is, int idx) {
+		if (isDSUBagTemplate(is)) {
+			is.setAmount(Math.max(0, is.getAmount()-1));
+			p.getInventory().addItem(makeDSUBag(idx));
+			return true;
+		}
+		return false;
+	}
+
+
 		
 	static class BagListener implements Listener {
 		@EventHandler
@@ -55,10 +87,10 @@ public class DSUBag {
 						pie.setCancelled(true);
 						int idx = Integer.parseInt(is.getItemMeta().getLore().get(3));
 						DeepStorageUnit.open(pie.getPlayer(), idx);
-					} else if (is.getItemMeta().getLore().get(0).equals("DSUBAGTMP")) {
+					} else if (is.getItemMeta().getLore().get(0).equals("DSUBAGTMP") && !pie.isCancelled()) {
 						pie.setCancelled(true);
-						is.setAmount(Math.max(0, is.getAmount()-1));
-						pie.getPlayer().getInventory().addItem(makeDSUBag(DeepStorageUnit.getNextID()));
+						pie.getPlayer().sendMessage("This bag has not been activated");
+						pie.getPlayer().sendMessage("Use it on a DSU multiblock to bind it");
 					}
 				}  
 			}

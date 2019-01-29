@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -104,6 +106,7 @@ public class MultiblockController {
 				trackedByLoc.get(i).add(inst);
 			});
 			trackedByInst.put(inst, locs);
+			save(coreLoc, inst);
 			return true;
 		}
 		return false;
@@ -115,26 +118,31 @@ public class MultiblockController {
 				.collect(Collectors.toList());
 		tgts.forEach(trackedByLoc::remove);
 		tokill.forEach(trackedByInst::remove);
+		tokill.forEach(i -> delete(toRemove, i));
 	}
 
+	public static void tryCreateAnyMultiInstance(Location coreLoc, Player p) {
+		List<IMultiblock> imbs = multiblocks.stream().filter(i -> i.isValidCoreBlock(coreLoc.getBlock()))
+				.collect(Collectors.toList());
+		if (!imbs.isEmpty()) {
+			if (imbs.stream().map(
+					i -> tryCreateMultiInstance(i, coreLoc, p))
+					.anyMatch(i -> i)) {
+				p.sendMessage("Multiblock Created");
+			}
+		}
+	}
+	
 	static final Listener listen = new Listener() {
 		@EventHandler
 		void onPlayerInteract(PlayerInteractEvent pie) {
-			if (!pie.isCancelled() && pie.getClickedBlock() != null) {
-				if (trackedByLoc.containsKey(pie.getClickedBlock().getLocation()) && !pie.getPlayer().isSneaking()) {
+			if (pie.getClickedBlock() != null) {
+				if (trackedByLoc.containsKey(pie.getClickedBlock().getLocation())) {
 					trackedByLoc.get(pie.getClickedBlock().getLocation()).forEach(i -> i.handleInteract(pie));
 				}
 				if (pie.getAction() == Action.RIGHT_CLICK_BLOCK
 						&& !trackedByLoc.containsKey(pie.getClickedBlock().getLocation())) {
-					List<IMultiblock> imbs = multiblocks.stream().filter(i -> i.isValidCoreBlock(pie.getClickedBlock()))
-							.collect(Collectors.toList());
-					if (!imbs.isEmpty()) {
-						if (imbs.stream().map(
-								i -> tryCreateMultiInstance(i, pie.getClickedBlock().getLocation(), pie.getPlayer()))
-								.anyMatch(i -> i)) {
-							pie.getPlayer().sendMessage("Multiblock Created");
-						}
-					}
+					tryCreateAnyMultiInstance(pie.getClickedBlock().getLocation(), pie.getPlayer());
 				}
 			}
 		}
@@ -150,21 +158,58 @@ public class MultiblockController {
 		@EventHandler
 		void onBlockPlace(BlockPlaceEvent bpe) {
 			if (!bpe.isCancelled() && bpe.canBuild()) {
-				List<IMultiblock> imbs = multiblocks.stream().filter(i -> i.isValidCoreBlock(bpe.getBlock()))
-						.collect(Collectors.toList());
-				if (!imbs.isEmpty()) {
-					if (imbs.stream().map(i -> tryCreateMultiInstance(i, bpe.getBlock().getLocation(), bpe.getPlayer()))
-							.anyMatch(i -> i)) {
-						bpe.getPlayer().sendMessage("Multiblock Created");
-					}
-				}
+				tryCreateAnyMultiInstance(bpe.getBlock().getLocation(), bpe.getPlayer());
 			}
 		}
 	};
+	
+	public static void loadAll() {
+		Map<Location, Map<UUID, Class<? extends IMultiblock>>> savedMbs = Factorize.instance.mbsc.getAllMultiBlocks();
+		for (Entry<Location, Map<UUID, Class<? extends IMultiblock>>> pos : savedMbs.entrySet()) {
+			for (Entry<UUID, Class<? extends IMultiblock>> mbs : pos.getValue().entrySet()) {
+				boolean done = false;
+				for (IMultiblock imb : multiblocks) {
+					if (mbs.getValue().isInstance(imb)) {
+						List<Location> locs = getValidMultiInstance(imb, pos.getKey());
+						if (locs != null) {
+							IMultiblockInstance inst = imb.setupNew(pos.getKey(), mbs.getKey(), 
+									Factorize.instance.mbsc.getMultiBlockData(pos.getKey(), mbs.getKey()));
+							locs.forEach(i -> {
+								if (!trackedByLoc.containsKey(i))
+									trackedByLoc.put(i, new ArrayList<>());
+								trackedByLoc.get(i).add(inst);
+							});
+							trackedByInst.put(inst, locs);						} else {
+							Factorize.instance.getLogger().warning("Failed to load multiblock " + mbs.getKey());
+						}
+						done = true;
+						break;
+					}
+				}
+				if (!done) {
+					Factorize.instance.getLogger().warning("Failed to load multiblock " + mbs.getKey() 
+						+ " as multiblock type " + mbs.getValue() + " wasn't found");
+				}
+			}
+		}
+	}
+	
+	public static void save(Location coreLoc, IMultiblockInstance mbs) {
+		Factorize.instance.mbsc.setMultiBlock(coreLoc, mbs);
+	}
+	
+	public static void delete(Location coreLoc, IMultiblockInstance mbs) {
+		Factorize.instance.mbsc.unsetMultiBlock(coreLoc, mbs);
+	}
+
 
 	public static void enable() {
 		registerMultiBlock(new MultiBlockDSU());
 		Bukkit.getServer().getPluginManager().registerEvents(listen, Factorize.instance);
+		loadAll();
+	}
+	
+	public static void disable() {
 	}
 
 }

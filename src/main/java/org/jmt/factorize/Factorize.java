@@ -12,6 +12,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jmt.factorize.config.DSUConfig;
+import org.jmt.factorize.config.MultiBlockStoreConfig;
 import org.jmt.factorize.dsu.DSUBag;
 import org.jmt.factorize.dsu.DeepStorageUnit;
 import org.jmt.factorize.multiblock.MultiblockController;
@@ -35,11 +36,20 @@ public class Factorize extends JavaPlugin {
 	 */
 	public DSUConfig dsuConf = null;
 	
+	/**
+	 * Multiblock config file
+	 */
+	public MultiBlockStoreConfig mbsc = null;
+	
 	
 	@Override
 	public void onEnable() {
 		instance = this;
 		getLogger().info("Factorize is LOADING [gear icon]");
+		//Multiblocks
+		mbsc = new MultiBlockStoreConfig(this, "mbsc.yml");
+		mbsc.reloadConfig();
+		MultiblockController.enable();
 		//DSUs
 		//Load the DSU config file
 		dsuConf = new DSUConfig(this, "dsu.yml");
@@ -49,8 +59,6 @@ public class Factorize extends JavaPlugin {
 		DSUBag.enable(this);
 		//Tools
 		Hammer.enable(this);
-		//Multiblocks
-		MultiblockController.enable();
 	}
 	
 	
@@ -62,6 +70,8 @@ public class Factorize extends JavaPlugin {
 		DSUBag.disable(this);
 		//Tools
 		Hammer.disable(this);
+		//Multiblocks
+		MultiblockController.disable();
 		//Save all resources
 		this.save();
 		instance = null;
@@ -75,6 +85,8 @@ public class Factorize extends JavaPlugin {
 		this.saveConfig();
 		//Saves DSU config
 		dsuConf.saveConfig();
+		//Saves DSU config
+		mbsc.saveConfig();
 	}
 	
 	
